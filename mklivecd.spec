@@ -21,7 +21,6 @@ Patch7:     	mklivecd-0.5.9-quiet-mode.patch.bz2
 Patch9:     	mklivecd-0.5.9-splash.patch.bz2
 Requires:	busybox cloop-utils mkisofs drakxtools-newt
 Requires:	squashfs-tools mediacheck syslinux zisofs-tools
-BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Buildarch:	noarch
 
 %description
