@@ -6,7 +6,7 @@
 %define cvs		20081211
 %define releasedate	0
 %define ver		1
-%define rel		1
+%define rel		2
 
 %if %cvs
 %define release		%mkrel 0.%{cvs}.%{rel}
