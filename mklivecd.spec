@@ -4,9 +4,9 @@
 
 %define rootver		0.6.0
 %define cvs		20081211
-%define releasedate	0
+%define releasedate	1
 %define ver		1
-%define rel		3
+%define rel		4
 
 %if %cvs
 %define release		%mkrel 0.%{cvs}.%{rel}
