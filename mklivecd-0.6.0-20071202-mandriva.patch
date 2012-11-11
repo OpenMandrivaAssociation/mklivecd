@@ -1,0 +1,369 @@
+diff -NEbwaur mklivecd/Makefile mklivecd_cvs/Makefile
+--- mklivecd/Makefile	2008-04-12 10:31:05.000000000 +0100
++++ mklivecd_cvs/Makefile	2008-12-10 11:06:40.497587101 +0000
+@@ -40,9 +40,9 @@
+ 		$(SED) -e 's,@DEF_USB_MODULES_DRV_26@,$(DEF_USB_MODULES_DRV_26),g' \
+ 			>$(DISTDIR)/linuxrc
+ 	$(CP) $(SRCDIR)/halt.local.in $(DISTDIR)/halt.local
+-	$(CP) $(SRCDIR)/liveusb.in $(DISTDIR)/liveusb
+-	$(CP) $(SRCDIR)/mkchgsloop.in $(DISTDIR)/mkchgsloop
+-	$(CP) $(SRCDIR)/mkremaster.in $(DISTDIR)/mkremaster
++#	$(CP) $(SRCDIR)/liveusb.in $(DISTDIR)/liveusb
++#	$(CP) $(SRCDIR)/mkchgsloop.in $(DISTDIR)/mkchgsloop
++#	$(CP) $(SRCDIR)/mkremaster.in $(DISTDIR)/mkremaster
+ 	$(CAT) $(SRCDIR)/rc.sysinit.in | \
+ 		$(SED) -e 's,@MAX_SPLASH@,$(MAX_SPLASH),g' | \
+ 		$(SED) -e 's,@VAL_SPLASH_FULL@,$(VAL_SPLASH_FULL),g' | \
+@@ -75,9 +75,9 @@
+ 	$(INSTALL) -m 644 $(DISTDIR)/rc.sysinit $(DESTDIR)$(SHAREDIR)
+ 	$(INSTALL) -m 755 $(DISTDIR)/$(PKGNAME) $(DESTDIR)$(SBINDIR)
+ 	$(INSTALL) -m 755 $(DISTDIR)/hwdetect $(DESTDIR)$(SBINDIR)
+-	$(INSTALL) -m 755 $(DISTDIR)/liveusb $(DESTDIR)$(SBINDIR)
+-	$(INSTALL) -m 755 $(DISTDIR)/mkchgsloop $(DESTDIR)$(SBINDIR)
+-	$(INSTALL) -m 755 $(DISTDIR)/mkremaster $(DESTDIR)$(SBINDIR)
++#	$(INSTALL) -m 755 $(DISTDIR)/liveusb $(DESTDIR)$(SBINDIR)
++#	$(INSTALL) -m 755 $(DISTDIR)/mkchgsloop $(DESTDIR)$(SBINDIR)
++#	$(INSTALL) -m 755 $(DISTDIR)/mkremaster $(DESTDIR)$(SBINDIR)
+ 
+ install-doc:
+ 	$(MKDIR) -p $(DESTDIR)$(DOCDIR)
+diff -NEbwaur mklivecd/Modules.mk mklivecd_cvs/Modules.mk
+--- mklivecd/Modules.mk	2008-04-12 10:31:05.000000000 +0100
++++ mklivecd_cvs/Modules.mk	2008-12-11 07:44:33.455574734 +0000
+@@ -9,7 +9,9 @@
+ 	nls_cp437 \
+ 	jbd \
+         ext3 \
++        unionfs \
+         reiserfs \
++        xfs \
+         fat \
+         msdos \
+ 	vfat \
+@@ -24,7 +26,14 @@
+ DEF_MODULES_DEP_26=\
+ 	isofs \
+ 	cdrom \
++        ide-core \
+ 	ide-cd \
++        i2c-core \
++        i2c-piix4 \
++        ff-memless \
++        evdev \
++        dock \
++        crc-t10dif \
+ 	squashfs \
+ 	loop \
+ 	paride \
+@@ -153,7 +162,6 @@
+ 	wd7000 \
+ 	sx8 
+ 
+-
+ # this one is just here to ensure we work (already included)
+ DEF_SCSI_MODULES_OPT_26=\
+ 	3w-xxxx
+@@ -178,7 +186,9 @@
+ 	usbcore
+ 
+ DEF_USB_MODULES_DRV_26=\
++        usbhid \
+ 	uhci-hcd \
+ 	ohci-hcd \
+ 	ehci-hcd \
+ 	usb-storage
++
+diff -NEbwaur mklivecd/Rules.mk mklivecd_cvs/Rules.mk
+--- mklivecd/Rules.mk	2008-04-12 10:31:05.000000000 +0100
++++ mklivecd_cvs/Rules.mk	2008-12-10 11:07:10.585742122 +0000
+@@ -107,6 +107,6 @@
+ 	$(SRCDIR)/hwdetect.in \
+ 	$(SRCDIR)/hwdetect-lang.in \
+ 	$(SRCDIR)/halt.local.in \
+-        $(SRCDIR)/liveusb.in \
+-        $(SRCDIR)/mkchgsloop.in \
+-	$(SRCDIR)/mkremaster.in
++#        $(SRCDIR)/mkchgsloop.in \
++#	$(SRCDIR)/mkremaster.in
++#        $(SRCDIR)/liveusb.in \
+diff -NEbwaur mklivecd/src/linuxrc.in mklivecd_cvs/src/linuxrc.in
+--- mklivecd/src/linuxrc.in	2008-04-12 10:31:05.000000000 +0100
++++ mklivecd_cvs/src/linuxrc.in	2008-12-11 07:49:51.872649201 +0000
+@@ -37,8 +37,8 @@
+ usblive=
+ OPT_MODULES="@DEF_MODULES_OPT_26@"
+ DEP_MODULES="@DEF_MODULES_26@ @DEF_MODULES_DEP_26@"
+-#SCSI_MODULES="@DEF_SCSI_MODULES_DEP_26@ @DEF_SCSI_MODULES_26@ @DEF_SCSI_MODULES_OPT_26@" # these are for the SCSI drivers
+-SCSI_MODULES="sd_mod sg libata ahci ata_piix ata_generic scsi_transport_fc scsi_transport_iscsi scsi_transport_sas scsi_transport_spi"
++SCSI_MODULES="@DEF_SCSI_MODULES_DEP_26@ @DEF_SCSI_MODULES_26@ @DEF_SCSI_MODULES_OPT_26@" # these are for the SCSI drivers
++#SCSI_MODULES="sd_mod sg libata ahci ata_piix ata_generic scsi_transport_fc scsi_transport_iscsi scsi_transport_sas scsi_transport_spi"
+ USB_MODULES="@DEF_USB_MODULES_26@"
+ USB_MODULES_DRV="@DEF_USB_MODULES_DRV_26@"
+ 
+@@ -270,6 +270,9 @@
+ initialise() {
+         busybox mount -n -t proc none /proc
+         busybox --install
++        #Not sure why this is next line is necessary but it
++        #doesn't happen automatically after busybox --install
++        ln /bin/busybox /bin/awk
+ 
+         echo "--- MKLIVECD LINUXRC ---------------"
+         rm -rf /sbin/init
+@@ -285,7 +288,9 @@
+ 
+         # Unhide the udev files
+         docmd "  Restoring udev files" \
+-              "mv /sbin/tmp/* /sbin"
++        "mv /sbin/tmp/* /sbin" \
++        "rm -f /bin/mknod" \
++        "mv /bin/tmp/* /bin"   
+ 
+         # parameter parsing
+         for x in $(cat /proc/cmdline); do
+@@ -305,13 +310,14 @@
+         set_progress
+ }
+ 
++
+ find_cdroms() {
+ 	# modprobe kernel modules needed for the LiveCD
+ 	## Initialise
+-	echo -n "  Loading basic cdrom modules for Kernel: $KERNELVER"
++        echo -n "  Loading basic cdrom, scsi & usb modules for Kernel: $KERNELVER"
+ 	## Load basic modules
+ 	ALL_LOADED=1
+-	for i in $OPT_MODULES $DEP_MODULES; do
++        for i in $OPT_MODULES $DEP_MODULES $SCSI_MODULES $USB_MODULES $USB_MODULES_DRV; do
+ 		loadmod $i || ALL_LOADED=
+ 	done
+ 	[ -n "$ALL_LOADED" ] && printloaded || printfail
+@@ -345,7 +351,7 @@
+ 	## Search for cdrom devices and add them to CDROM_LIST
+ 	## Check for ide channels.
+ 
+-	if [ ! -e /sbin/udevstart ]; then
++        if [ ! -e /sbin/start_udev ]; then
+ 		#echo -n "  Starting mdev: "
+ 		# make needed device
+ 		mknod /dev/console c 5 1
+@@ -355,10 +361,13 @@
+ 		# echo "Listing of /dev after running mdev: "; cd /dev; ls -l; cd /
+ 		#echo /sbin/mdev > /proc/sys/kernel/hotplug
+ 	else
+-		#echo -n "  Starting udev: "
+-		/sbin/udevstart
++                echo -n "  Starting udev: "
++                ( `/sbin/start_udev >/dev/null 2>/dev/null` ) && printok || printfail
+ 	fi
+ 
++        echo -n "  Waiting for udev to do stuff."
++        sleep 10 && printok
++  
+ 	if [ -n "$usblive" ]; then
+ 		## Check for usb stick
+ 		for usb_device in /dev/sd[a-h][0-2]; do
+@@ -376,6 +385,7 @@
+ 				CDROM_LIST="$CDROM_LIST $scsi_cdrom"
+ 			fi
+ 		done
++
+ 		printok
+ 		set_progress
+ 	fi
+diff -NEbwaur mklivecd/src/mklivecd.in mklivecd_cvs/src/mklivecd.in
+--- mklivecd/src/mklivecd.in	2008-04-12 10:31:05.000000000 +0100
++++ mklivecd_cvs/src/mklivecd.in	2008-12-11 12:30:44.363557269 +0000
+@@ -170,7 +170,7 @@
+ 				   for grub the name must be 'menu.lst'.
+ 				   Boot menu will be generated if not specified.
+    --boottheme <name>              Which gfxboot theme should be used.
+-                                   Defaults to 'pclinuxos'
++                                  Defaults to 'Mandriva'
+    --bootlang <lang code>          Which language shound be used as default
+                                    in the boot menu.
+ 				   Defaults to 'en'.
+@@ -455,7 +455,7 @@
+ 	$opts{application} = "$distro $version LiveCD" unless (defined($opts{application}));
+ 	$opts{preparer} = "$PROG_NAME $PROG_VERSION" unless (defined($opts{preparer}));
+ 	$opts{publisher} = "$URL" unless (defined($opts{publisher}));
+-	$opts{boottheme} = "pclinuxos" unless (defined($opts{boottheme}));
++        $opts{boottheme} = "Mandriva" unless (defined($opts{boottheme}));
+ 	$opts{bootlang} = "en" unless (defined($opts{bootlang}));
+ 
+ 	# create our working dir if none given
+@@ -621,6 +621,9 @@
+ 
+ 	# copy files
+ 	do_copy($o_root."/usr/bin/busybox",               755, "$dir/bin/busybox",             ++$pos);
++        #Bash required to handle function definitions in /etc/init.d/functions correctly which
++        #is a dependency of start_udev.
++        do_copy("/bin/bash",                      755, "$dir/bin/bash",                ++$pos);
+ 	do_copy($o_root."/usr/lib/drakx-installer-binaries/probe-modules",            755, "$dir/bin/probe-modules",       ++$pos);
+ 	do_copy($o_root."/usr/share/mklivecd/linuxrc",    755, "$dir/linuxrc",                 ++$pos);
+ 	do_copy($o_root."/usr/share/mklivecd/rc.sysinit", 755, "$dir/etc/rc.d/rc.sysinit",     ++$pos);
+@@ -634,14 +637,19 @@
+ 	do_copy("/usr/share/mklivecd/halt.local", 755, "$dir/sbin/halt.local",         ++$pos);
+ 	do_copy($o_root."etc/inittab",            644, "$dir/etc/inittab",             ++$pos);
+ 	do_copy($o_root."sbin/init",              755, "$dir/sbin/init.dynamic",       ++$pos);
+-	do_copy($o_root."lib/libc.so.6",            0, "$dir/lib",                     ++$pos);
+-	do_copy($o_root."lib/ld-linux.so.2",        0, "$dir/lib",                     ++$pos);
+-	do_copy($o_root."lib/libext2fs.so.2",       0, "$dir/lib",                     ++$pos);
+-	do_copy($o_root."lib/libncurses.so.5",      0, "$dir/lib",                     ++$pos);
+-	do_copy($o_root."lib/libz.so.1",            0, "$dir/lib",                     ++$pos);
+-	do_copy($o_root."lib/libmodprobe.so.0",     0, "$dir/lib",                     ++$pos);
+-	do_copy($o_root."lib/libblkid.so.1.0",      0, "$dir/lib/libblkid.so.1",       ++$pos);
+-	do_copy($o_root."lib/libuuid.so.1",         0, "$dir/lib",                     ++$pos);
++
++        do_cmd(" cp /lib/libtermcap* $dir/lib/.",                                      ++$pos);
++        do_cmd(" cp /lib/libdl.* $dir/lib/.",                                          ++$pos);
++        do_cmd(" cp /lib/libc.* $dir/lib/.",                                           ++$pos);
++        do_cmd(" cp /lib/libc-* $dir/lib/.",                                           ++$pos);
++        do_cmd(" cp -a /lib/udev $dir/lib/.",                                          ++$pos);
++        do_cmd(" cp /lib/ld-linux.* $dir/lib/.",                                       ++$pos);
++        do_cmd(" cp /lib/libext2fs.* $dir/lib/.",                                      ++$pos);
++        do_cmd(" cp /lib/libncurses.* $dir/lib/.",                                     ++$pos);
++        do_cmd(" cp /lib/libz.* $dir/lib/.",                                           ++$pos);
++        do_cmd(" cp /lib/libmodprobe.* $dir/lib/.",                                    ++$pos);
++        do_cmd(" cp /lib/libblkid.* $dir/lib/.",                                       ++$pos);
++        do_cmd(" cp /lib/libuuid.* $dir/lib/.",                                        ++$pos);
+ 	do_copy($o_root."lib/module-init-tools/ldetect-lst-modules.alias", 0,   "$dir/lib/module-init-tools",   ++$pos);
+ 	do_copy($o_root."lib/modules/${o_kernel}/modules.dep",             0,   "$dir/modules",                 ++$pos);
+ 	do_copy($o_root."lib/modules/${o_kernel}/modules.description",     0,   "$dir/modules",                 ++$pos);
+@@ -652,13 +652,23 @@
+ 	do_copy($o_root."usr/share/ldetect-lst/usbtable.gz",               644, "$dir/usr/share/ldetect-lst",   ++$pos);
+ 	# Copy but hide the udev binaries
+ 	do_cmd("mkdir $dir/sbin/tmp",			                                ++$pos);
++        do_cmd("mkdir $dir/bin/tmp",                    ++$pos);
++        #Use normal mknod since busybox version doesn't recognise permissions parameter
++        do_copy($o_root."/bin/mknod",    755, "$dir/bin/tmp", 				++$pos);
+ 	do_copy($o_root."/sbin/udev*",	          755, "$dir/sbin/tmp",			++$pos);
++        do_copy($o_root."/sbin/start_udev",    755, "$dir/sbin/tmp",                    ++$pos);
++        do_copy($o_root."/sbin/consoletype",    755, "$dir/sbin/tmp",                   ++$pos);
++        do_copy($o_root."/sbin/fstab-decode",    755, "$dir/sbin/tmp",                  ++$pos);
++        do_copy($o_root."/sbin/create_static_dev_nodes",    755, "$dir/sbin/tmp",                 ++$pos);
+ 	do_cmd("cp -a $o_root/etc/udev $dir/etc",	                                ++$pos);
+ 	if (-e "$o_root/etc/dev.d") {
+ 	    do_cmd("cp -a $o_root/etc/dev.d $dir/etc",	++$pos);
+ 	}
+ 	do_cmd("cp -a $o_root/etc/sysconfig $dir/etc",	++$pos);
+ 
++        do_cmd("mkdir -p $dir/etc/rc.d/init.d",  ++$pos);
++        do_cmd("ln -s $o_root/etc/rc.d/init.d $dir/etc/init.d",  ++$pos);
++        do_copy("$o_root/etc/rc.d/init.d/functions", 755, "$dir/etc/rc.d/init.d",  ++$pos);
+ 	do_cmd("mknod $dir/dev/initrd b 1 250", ++$pos);
+ 	do_cmd("mknod $dir/dev/console c 5 1",  ++$pos);
+ 	do_cmd("mknod $dir/dev/null c 1 3",     ++$pos);
+@@ -668,7 +685,6 @@
+ 	do_cmd("mknod $dir/dev/tty$_ c 4 $_",   ++$pos) foreach((1,2,3,4));
+ 	do_cmd("mknod $dir/dev/lvm b 109 0",    ++$pos);
+ 
+-
+ 	# copy modules
+ 	foreach my $mod (@allmods) {
+ #		my $modpath = $o_root."lib/modules/$o_kernel/kernel/$mod$modext";
+@@ -748,7 +764,6 @@
+ 		do_cmd("cp -r /usr/share/bootsplash/scripts /tmp/bootsplash");
+ 		do_cmd("perl -pi -e 's#usr/share/bootsplash#tmp/bootsplash#' /tmp/bootsplash/scripts/make-boot-splash");
+ 		do_cmd("perl -pi -e 's/^warn/#warn/' /tmp/bootsplash/scripts/remove-boot-splash");		
+-		
+ 		do_cmd("[ -d $o_root/tmp ] || mkdir $o_root/tmp ; \
+ 		mv -f $initrd.gz $o_root/tmp ; \
+ 		/tmp/bootsplash/scripts/make-boot-splash $o_root/tmp/initrd.gz $o_resolution; \
+@@ -798,10 +813,10 @@
+ 	}
+ 	do_copy("/usr/sbin/hwdetect",             755, "$dir/usr/sbin/hwdetect",       ++$pos);
+ 	do_copy("/usr/share/mklivecd/halt.local", 755, "$dir/sbin/halt.local",         ++$pos);
+-	do_copy($o_root."etc/inittab",            644, "$dir/etc/inittab",             ++$pos);
+-	do_copy($o_root."sbin/init",              755, "$dir/sbin/init.dynamic",       ++$pos);
+-	do_copy($o_root."lib/libc.so.6",            0, "$dir/lib",                     ++$pos);
+-	do_copy($o_root."lib/ld-linux.so.2",        0, "$dir/lib",                     ++$pos);
++        do_copy($o_root."/etc/inittab",            644, "$dir/etc/inittab",            ++$pos);
++        do_copy($o_root."/sbin/init",              755, "$dir/sbin/init.dynamic",      ++$pos);
++        do_copy($o_root."/lib/libc.so.6",            0, "$dir/lib",                    ++$pos);
++        do_copy($o_root."/lib/ld-linux.so.2",        0, "$dir/lib",                    ++$pos);
+ 
+ 
+ 	# Copy but hide the udev binaries
+@@ -1007,7 +1022,7 @@
+ 	    do_copy($o_root."boot/vmlinuz-$o_mbkopt", 644, "$workdir/livecd/isolinux/vmlinuz2", ++$pos)
+         }
+ 	do_copy("/usr/bin/mediacheck", 755, "$workdir/livecd/isolinux/mediacheck", ++$pos);
+-	do_copy($o_root."boot/memtest*.*.bin", 644, "$workdir/livecd/isolinux/memtest", ++$pos);
++        do_copy($o_root."boot/memtest*.bin", 644, "$workdir/livecd/isolinux/memtest", ++$pos);
+         if ($o_bootloader =~ m/^iso/) {
+ 	    do_copy($o_root."usr/share/gfxboot/themes/$opts{boottheme}/install/*", 644, "$workdir/livecd/isolinux", ++$pos);
+ 	  } else {
+@@ -1032,7 +1047,7 @@
+ 		$appopt = "initrd=initrd.gz root=/dev/rd/3 devfs=mount vga=$o_vgamode keyb=$o_keyboard";
+ 	}
+ 	$appopt .= " splash=$o_splash" if ($o_splash !~ m/no/);
+-	$appopt = "$appopt fastboot=yes automatic=method:cdrom ramdisk_size=32000" if (!defined($kernel26));
++        $appopt = "$appopt fastboot=yes automatic=method:cdrom ramdisk_size=64000" if (!defined($kernel26));
+ 	$appopt = "$appopt fstab=".$opts{fstab} if (defined($opts{fstab}));
+ 	$appopt = "$appopt home=usb" if (defined($opts{usbhome}));
+ 	$appopt = "$appopt $_" foreach (@{$opts{bootopt}});
+@@ -1055,7 +1070,7 @@
+ 		print CFG "$k livecd_$k.msg\n";
+ 	}
+ 	print CFG "gfxboot bootlogo\n";
+-	print CFG "label LiveCD\n";
++        print CFG "label livecd\n";
+ 	print CFG "    kernel vmlinuz\n";
+ 	print CFG "    append livecd=livecd $appopt\n";
+ 	print CFG "label VideoSafeModeFBDev\n";
+diff -NEbwaur mklivecd/src/rc.sysinit.in mklivecd_cvs/src/rc.sysinit.in
+--- mklivecd/src/rc.sysinit.in	2008-04-12 10:31:05.000000000 +0100
++++ mklivecd_cvs/src/rc.sysinit.in	2008-12-11 11:53:05.130744032 +0000
+@@ -305,7 +305,7 @@
+ 		PREV="$CURR"
+ 	done
+ 
+-	mkdir -p /var/lock/subsys
++        mkdir -p /var/lock/subsys/dbus
+ 	mkdir -p /var/log && touch /var/log/wtmp && touch /var/log/messages
+ 	mkdir -p /var/run && touch /var/run/utmp
+ 	rm -rf /var/tmp && ln -sf /tmp /var/tmp
+@@ -365,10 +365,10 @@
+ 		SKIP="yes"
+ 	    fi
+ 	else
+-	    if [ "$HWDETECT" = "yes" ]; then
+-				SKIP="no"
+-	    else
++            if [ "$OPTION" = "no" ]; then
+                 SKIP="yes"
++            else
++                SKIP="no"
+ 	    fi
+ 	fi
+ 	if [ "$SKIP" = "yes" ]; then
+@@ -388,6 +388,7 @@
+ 	# Don't run depmod (must be run before imaging system)
+ 	/bin/sed -i -e 's/action.*depmod/true/g' /etc/rc.d/rc.sysinit
+ 
++
+ 	# Do various other configuration tasks (now that /etc is available)
+ 	if [ -z "$hostname" ]; then
+ 		/bin/sed -i.livecd -e "s/\(\S*HOSTNAME=\).*/\1${hostname}/g" /etc/sysconfig/network
+@@ -518,7 +519,6 @@
+ echo -n "' to continue booting."
+ execshell
+ ### End of testing section
+-
+ }
+ 
+ ###### MAIN ######
+@@ -546,11 +546,8 @@
+ else
+ 	do_union ""
+ fi
+-
+ setupinit ""
+-
+ echo "--- Exiting MKLIVECD RC.SYSINIT ----"
+-
+ # Comment out the line that invokes rc.sysinit instead of deleting it
+ cat /etc/inittab | sed -e /^si/'s/si/# si/' >/inittab;mv /inittab /etc/inittab
+ exec /etc/rc.d/rc.sysinit <dev/console >dev/console 2>&1
+

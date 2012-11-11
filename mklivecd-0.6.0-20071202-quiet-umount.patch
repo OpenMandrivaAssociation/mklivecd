@@ -1,0 +1,11 @@
+--- mklivecd-0.6.0-20071202/src/rc.sysinit.in	2007-12-02 06:41:45.000000000 -0800
++++ mklivecd-0.6.0-20071202/src/rc.sysinit.in.new	2008-12-08 12:58:18.000000000 -0800
+@@ -485,7 +485,7 @@
+ 
+ 	# clean up /proc (init mounts it via rc.sysinit)
+ 	docmd   "  Unmounting /proc filesystem" \
+-		"umount /proc"
++		"umount /proc >/dev/null 2>&1"
+ 
+ 	# display some info
+ 	distro=`/bin/cat /etc/redhat-release | awk '{ print $1 }'`

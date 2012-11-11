@@ -1,0 +1,8 @@
+--- ./src/mklivecd.in.tv	2005-09-21 00:02:59.000000000 +0200
++++ ./src/mklivecd.in	2005-09-21 00:03:03.000000000 +0200
+@@ -1,4 +1,4 @@
+-#!/usr/bin/perl -w
++#!/usr/bin/perl
+ #
+ # LiveCD iso build script
+ #

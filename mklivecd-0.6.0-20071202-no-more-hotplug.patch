@@ -1,0 +1,10 @@
+--- mklivecd-0.6.0-20071202/src/mklivecd.in	2007-10-22 16:22:08.000000000 -0700
++++ mklivecd-0.6.0-20071202/src/mklivecd.in.new	2008-12-08 12:53:55.000000000 -0800
+@@ -617,7 +617,6 @@
+ 	if (-e "$o_root/etc/dev.d") {
+ 	    do_cmd("cp -a $o_root/etc/dev.d $dir/etc",	++$pos);
+ 	}
+-	do_cmd("cp -a $o_root/etc/hotplug $dir/etc",	++$pos);
+ 	do_cmd("cp -a $o_root/etc/sysconfig $dir/etc",	++$pos);
+ 
+ 	do_cmd("mknod $dir/dev/initrd b 1 250", ++$pos);
