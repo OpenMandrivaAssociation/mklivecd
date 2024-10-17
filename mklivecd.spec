@@ -28,7 +28,7 @@ Version:	%{version}
 Release:	%{release}
 License:	GPLv2+
 Group:		System/Configuration/Boot and Init
-URL:		http://livecd.berlios.de/
+URL:		https://livecd.berlios.de/
 Source0:	http://download.berlios.de/livecd/%{distname}
 Patch3:     	mklivecd-0.6.0-20071202-no-more-hotplug.patch
 Patch4:     	mklivecd-0.6.0-20071202-quiet-umount.patch
