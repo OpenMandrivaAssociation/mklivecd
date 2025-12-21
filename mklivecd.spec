@@ -45,6 +45,7 @@ Requires:	zisofs-tools
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Buildarch:	noarch
 
+BuildRequires:	make
 %description
 %{Summary}.
 
