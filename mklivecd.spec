@@ -9,12 +9,12 @@
 %define rel		4
 
 %if %cvs
-%define release		%mkrel 0.%{cvs}.%{rel}
+%define release 0.%{cvs}.%{rel}.1
 %define version		%{rootver}.%{cvs}
 %define distname	%{name}-%{cvs}.tar.lzma
 %define dirname		%{name}
 %else
-%define release		%mkrel %{rel}
+%define release %{rel}.1
 %define version		%{rootver}.%{releasedate}
 %define distname	%{name}-%{rootver}-%{releasedate}.tar.bz2
 %define dirname		%{name}-%{rootver}-%{releasedate}
@@ -154,7 +154,7 @@ rm -rf %{buildroot}
 * Tue May 31 2005 Lenny Cartier <lenny@mandriva.com> 0.5.9-0.9mdk
 - requires syslinux
 
-* Tue Mar 22 2005 Nicolas Lécureuil <neoclust@mandrake.org> 0.5.9-0.8mdk
+* Tue Mar 22 2005 Nicolas Lï¿½cureuil <neoclust@mandrake.org> 0.5.9-0.8mdk
 - rebuild
 
 * Tue Mar 22 2005 Per Ã˜yvind Karlsen <peroyvind@linux-mandrake.com> 0.5.9-0.7mdk
